@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
+// ⭐️ JAVÍTVA: A ChangeEvent típust külön, type-only importként kell beilleszteni
+import type { ChangeEvent } from "react";
+
 import QRCodeStyling from "qr-code-styling";
 
-// A QRCodeStyling objektum inicializálása a komponensen kívül
-// Ez a könyvtár nem React komponens, hanem egy osztály!
+// A 'qr-code-styling' inicializálása a komponensen kívül
 const qrCode = new QRCodeStyling({
   width: 250,
   height: 250,
@@ -11,48 +13,47 @@ const qrCode = new QRCodeStyling({
   image: "",
   dotsOptions: {
     color: "#2563eb",
-    type: "square", // Kezdeti forma: négyzetes
+    type: "square",
   },
   backgroundOptions: {
-    color: "transparent", // Átlátszó háttér
+    color: "transparent",
   },
   imageOptions: {
     crossOrigin: "anonymous",
     margin: 5,
   },
-  // ⭐️ ÚJ: Megjelenés a referenciaképhez hasonló stílusban
   cornersSquareOptions: {
     color: "#2563eb",
-    type: "extra-rounded", // Extra kerekített sarkok a referenciaképhez
+    type: "extra-rounded",
   },
   cornersDotOptions: {
     color: "#2563eb",
   },
 });
 
-function App() {
-  const [qrValue, setQrValue] = useState("https://www.hello.hu");
-  const [fgColor, setFgColor] = useState("#2563eb");
-  const [dotStyle, setDotStyle] = useState("square"); // Kezdeti pont stílus
-  const [logoUrl, setLogoUrl] = useState("");
+const App: React.FC = () => {
+  const [qrValue, setQrValue] = useState<string>("https://www.hello.hu");
+  const [fgColor, setFgColor] = useState<string>("#2563eb");
+  const [dotStyle, setDotStyle] = useState<string>("square");
+  const [logoUrl, setLogoUrl] = useState<string>("");
 
-  // A DOM elem (div) referenciája, ahova a kód rajzolódik
-  const ref = useRef(null);
+  // A DOM elem (div) referenciájának tipizálása: HTMLDivElement | null
+  const ref = useRef<HTMLDivElement>(null);
 
-  // === 1. QRCode Inicializálása és DOM-hoz kapcsolása (Csak egyszer fut le) ===
+  // === 1. QRCode Inicializálása és DOM-hoz kapcsolása ===
   useEffect(() => {
-    // A könyvtár a ref-re rajzolja a kódot
-    qrCode.append(ref.current);
+    if (ref.current) {
+      qrCode.append(ref.current);
+    }
   }, []);
 
-  // === 2. QRCode Adat Frissítése (Minden State változáskor fut) ===
+  // === 2. QRCode Adat Frissítése ===
   useEffect(() => {
-    // Frissítjük a kód adatát
     qrCode.update({
       data: qrValue,
       dotsOptions: {
         color: fgColor,
-        type: dotStyle, // Az egyedi forma beállítása
+        type: dotStyle as "square" | "dots" | "rounded",
       },
       cornersSquareOptions: { color: fgColor },
       cornersDotOptions: { color: fgColor },
@@ -60,26 +61,24 @@ function App() {
     });
   }, [qrValue, fgColor, dotStyle, logoUrl]);
 
-  // Kép feltöltés, lokális URL generálásával
-  const handleLogoUpload = (event) => {
-    const file = event.target.files[0];
+  // Kép feltöltés, lokális URL generálásával (Esemény tipizálása)
+  const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files ? event.target.files[0] : null;
+
     if (file) {
       setLogoUrl(URL.createObjectURL(file));
     } else {
-      setLogoUrl(""); // Törlés, ha nem választott ki fájlt
+      setLogoUrl("");
     }
   };
 
-  // Letöltés funkció a beépített metódussal
+  // Letöltés funkció
   const downloadQRCode = () => {
-    // Letöltés PNG formátumban
     qrCode.download({ extension: "png", name: "branded-qrcode" });
   };
 
   return (
-    // Középre igazított, világos háttér (Kártya váz)
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-6 text-gray-900">
-      {/* FŐ KÁRTYA KONTÉNER */}
       <div className="bg-white rounded-3xl shadow-2xl shadow-gray-300/60 p-6 sm:p-10 w-full max-w-sm text-center space-y-6">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -93,7 +92,6 @@ function App() {
         {/* QR KÓD MEGJELENÍTÉSE (A ref ide mutat) */}
         <div className="flex justify-center mb-6">
           <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-inner">
-            {/* ⭐️ ÚJ: Ref hozzárendelése, a kód ide rajzolódik */}
             <div ref={ref} className="w-[250px] h-[250px] mx-auto" />
           </div>
         </div>
@@ -111,7 +109,9 @@ function App() {
               id="qr-input"
               type="text"
               value={qrValue}
-              onChange={(e) => setQrValue(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setQrValue(e.target.value)
+              }
               placeholder="Pl.: https://www.az-oldalad.hu"
               className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base"
             />
@@ -119,7 +119,6 @@ function App() {
 
           {/* SZÍN ÉS STÍLUS (Dot style) */}
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* SZÍN VÁLASZTÓ */}
             <section className="flex-1">
               <label
                 htmlFor="color-picker"
@@ -132,13 +131,14 @@ function App() {
                   id="color-picker"
                   type="color"
                   value={fgColor}
-                  onChange={(e) => setFgColor(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setFgColor(e.target.value)
+                  }
                   className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
                 />
               </div>
             </section>
 
-            {/* PONT STÍLUS VÁLASZTÓ */}
             <section className="flex-1">
               <label
                 htmlFor="dot-style"
@@ -149,7 +149,9 @@ function App() {
               <select
                 id="dot-style"
                 value={dotStyle}
-                onChange={(e) => setDotStyle(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                  setDotStyle(e.target.value)
+                }
                 className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 text-base"
               >
                 <option value="square">Rectangle</option>
@@ -200,6 +202,6 @@ function App() {
       </div>
     </div>
   );
-}
+};
 
 export default App;
