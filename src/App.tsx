@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
 
 import QRCodeStyling from "qr-code-styling";
+import CookieConsent from "react-cookie-consent";
 
 // A 'qr-code-styling' inicializálása a komponensen kívül
 const qrCode = new QRCodeStyling({
@@ -193,13 +194,31 @@ const App: React.FC = () => {
           <span>Download</span>
         </button>
       </div>
-
-      {/* HIRDETÉSI ZÓNA */}
-      <div className="mt-8 w-full max-w-sm text-center p-4 border-2 border-dashed border-gray-300 bg-white rounded-xl shadow-md">
-        <p className="text-gray-700 font-semibold">
-          Google AdSense Hirdetés Helye
-        </p>
-      </div>
+      <CookieConsent
+        location="bottom"
+        buttonText="Elfogadom"
+        cookieName="qrGeneratorConsent"
+        style={{ background: "#2B373B", fontSize: "14px" }}
+        buttonStyle={{
+          color: "#ffffff",
+          fontSize: "13px",
+          background: "#2563eb",
+          borderRadius: "8px",
+          padding: "8px 16px",
+        }}
+        expires={150} // 150 napig tárolja a beleegyezést
+        // Az "onAccept" eseményt használhatod a Google Analytics/AdSense szkript betöltéséhez,
+        // ha a jövőben dinamikusan akarod kezelni a szkripteket.
+      >
+        Ez az oldal cookie-kat használ a felhasználói élmény javítására és
+        hirdetések megjelenítésére (AdSense, Analytics).{" "}
+        <a
+          href="/adatvedelem"
+          style={{ color: "#2563eb", textDecoration: "underline" }}
+        >
+          Adatvédelmi tájékoztató
+        </a>
+      </CookieConsent>
     </div>
   );
 };
