@@ -61,31 +61,6 @@ const App: React.FC = () => {
         });
     }, [qrValue, fgColor, dotStyle, logoUrl]);
 
-    // === 3. Hirdetési Szkript Betöltése (ÚJ) ===
-    useEffect(() => {
-        // Ellenőrizzük, hogy a környezetben elérhető-e a 'window'/'document' (kliens oldalon vagyunk-e)
-        if (typeof document === 'undefined') {
-            return;
-        }
-
-        const script = document.createElement("script");
-
-        // Beállítjuk az attribútumokat
-        script.async = true;
-        script.setAttribute("data-cfasync", "false"); 
-        script.src = "//pl27967415.effectivegatecpm.com/224a237a7ea5ffd150d9b7f259f23d91/invoke.js";
-        
-        // Hozzáadjuk a <body>-hoz
-        document.body.appendChild(script);
-
-        // Cleanup funkció: Töröljük a szkriptet a komponens eltávolításakor
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
-    }, []); 
-
     // Kép feltöltés, lokális URL generálásával (Esemény tipizálása)
     const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files ? event.target.files[0] : null;
@@ -223,7 +198,6 @@ const App: React.FC = () => {
             {/* ⬅️ ITT VAN A MÓDOSÍTOTT RÉSZ ⬇️ */}
             <div className="mt-8 w-full max-w-sm text-center p-4 border-2 border-dashed border-gray-300 bg-white rounded-xl shadow-md">
                 {/* A hirdetési konténer ID-vel */}
-                <div id="container-224a237a7ea5ffd150d9b7f259f23d91"></div>
             </div>
             {/* ⬅️ MÓDOSÍTOTT RÉSZ VÉGE ⬆️ */}
 
@@ -241,8 +215,7 @@ const App: React.FC = () => {
                 }}
                 expires={150} // 150 napig tárolja a beleegyezést
             >
-                Ez az oldal cookie-kat használ a felhasználói élmény javítására és
-                hirdetések megjelenítésére (AdSense, Analytics).{" "}
+                This page using cookies for better user experience (AdSense, Analytics).{" "}
                 <a
                     href="/adatvedelem"
                     style={{ color: "#2563eb", textDecoration: "underline" }}
