@@ -1,4 +1,3 @@
-// ...existing code...
 import React, { useState, useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
 import QRCodeStyling from "qr-code-styling";
@@ -6,15 +5,18 @@ import CookieConsent from "react-cookie-consent";
 
 const GA_MEASUREMENT_ID = "G-WECQ2QKPBJ"; // ← ide a te GA4 ID-d
 
-// Globális típus kiegészítés a gtag számára
+// --- Globális típusok ---
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
     dataLayer?: any[];
+    kofiWidgetOverlay?: {
+      draw: (id: string, options: Record<string, any>) => void;
+    };
   }
 }
 
-// QR-kód inicializálása a komponensen kívül
+// --- QR-kód inicializálása a komponensen kívül ---
 const qrCode = new QRCodeStyling({
   width: 250,
   height: 250,
@@ -33,7 +35,6 @@ const App: React.FC = () => {
   const [fgColor, setFgColor] = useState("#2563eb");
   const [dotStyle, setDotStyle] = useState("square");
   const [logoUrl, setLogoUrl] = useState("");
-  // Inicializálás cookie megléte alapján (ha már korábban elfogadták)
   const [cookiesAccepted, setCookiesAccepted] = useState(() => {
     try {
       return document.cookie
@@ -43,34 +44,29 @@ const App: React.FC = () => {
       return false;
     }
   });
+
   const ref = useRef<HTMLDivElement>(null);
 
-  // === 1. QRCode DOM-hoz kapcsolása (csak egyszer, ha nincs már tartalom) ===
+  // === 1. QRCode DOM-hoz kapcsolása ===
   useEffect(() => {
     if (ref.current && ref.current.children.length === 0) {
       qrCode.append(ref.current);
     }
   }, []);
 
-  // === 2. GA4 betöltése csak cookie elfogadás után ===
+  // === 2. GA4 betöltése (csak ha cookie elfogadva) ===
   useEffect(() => {
     if (!cookiesAccepted) return;
 
     const gaSrc = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
 
-    // Ne szúrjuk be újra, ha már van
-    if (document.querySelector(`script[src="${gaSrc}"]`)) {
-      console.log("ℹ️ GA4 script már be van töltve");
-      return;
-    }
+    if (document.querySelector(`script[src="${gaSrc}"]`)) return;
 
-    // GA4 könyvtár betöltése
     const script1 = document.createElement("script");
     script1.async = true;
     script1.src = gaSrc;
     document.head.appendChild(script1);
 
-    // Konfiguráció (textContent használata CSP/barrier okán)
     const script2 = document.createElement("script");
     script2.textContent = `
       window.dataLayer = window.dataLayer || [];
@@ -83,12 +79,29 @@ const App: React.FC = () => {
     script1.onload = () => {
       console.log("✅ GA4 script betöltődött és inicializálva");
     };
-
-    // cleanup: opcionálisan eltávolíthatjuk a script-eket unmountkor, ha szeretnéd
-    return () => {
-      // nem törlünk alapból, hogy ne veszítsük el a session-t
-    };
   }, [cookiesAccepted]);
+
+  // === 2/b. Ko-fi widget betöltése ===
+  useEffect(() => {
+    const scriptSrc = "https://storage.ko-fi.com/cdn/scripts/overlay-widget.js";
+    if (document.querySelector(`script[src="${scriptSrc}"]`)) return;
+
+    const script = document.createElement("script");
+    script.src = scriptSrc;
+    script.async = true;
+    script.onload = () => {
+      if (window.kofiWidgetOverlay) {
+        window.kofiWidgetOverlay.draw("boostoraqr", {
+          type: "floating-chat",
+          "floating-chat.donateButton.text": "Support Us",
+          "floating-chat.donateButton.background-color": "#5bc0de",
+          "floating-chat.donateButton.text-color": "#323842",
+        });
+        console.log("💙 Ko-fi widget aktiválva");
+      }
+    };
+    document.body.appendChild(script);
+  }, []);
 
   // === 3. QR frissítés minden változásra ===
   useEffect(() => {
@@ -111,7 +124,7 @@ const App: React.FC = () => {
     else setLogoUrl("");
   };
 
-  // === 5. QR letöltés + GA4 esemény küldése biztonságosan ===
+  // === 5. QR letöltés + GA4 esemény ===
   const downloadQRCode = () => {
     qrCode.download({ extension: "png", name: "boostora-qr" });
 
@@ -127,6 +140,7 @@ const App: React.FC = () => {
     }
   };
 
+  // === 6. Render ===
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-6 text-gray-900">
       <div className="bg-white rounded-3xl shadow-2xl shadow-gray-300/60 p-6 sm:p-10 w-full max-w-sm text-center space-y-6">
@@ -139,14 +153,12 @@ const App: React.FC = () => {
           </p>
         </header>
 
-        {/* QR Kód */}
         <div className="flex justify-center mb-6">
           <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-inner">
             <div ref={ref} className="w-[250px] h-[250px] mx-auto" />
           </div>
         </div>
 
-        {/* Input mezők */}
         <div className="space-y-4 text-left border-t pt-6">
           <section>
             <label
@@ -215,12 +227,10 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      {/* Hely a Buy Me a Coffee / Ko-fi gombnak */}
       <div className="mt-8 w-full max-w-sm text-center p-4 border-2 border-dashed border-gray-300 bg-white rounded-xl shadow-md">
         <p className="text-sm text-gray-600">Support Boostora 💙</p>
       </div>
 
-      {/* CookieConsent */}
       <CookieConsent
         location="bottom"
         buttonText="Elfogadom"
@@ -249,4 +259,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-// ...existing code...
